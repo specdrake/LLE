@@ -99,26 +99,37 @@ sample_dir = args.save_dir
 if not os.path.isdir(sample_dir):
     os.makedirs(sample_dir)
 
-print("Start evalating!")
+print("Start evaluating!")
 start_time = time.time()
 for idx in range(len(eval_low_data)):
-    print(idx)
+    print(f"evaluating low light image no.: {idx}")
     name = eval_img_name[idx]
+    print(f"name: {name}")
     input_low = eval_low_data[idx]
     input_low_eval = np.expand_dims(input_low, axis=0)
     h, w, _ = input_low.shape
+    print(f"image shape: {input_low.shape}")
 
+    print("Running decomp net...")
     decom_r_low, decom_i_low = sess.run([decom_output_R, decom_output_I], feed_dict={input_decom: input_low_eval})
+    print("Done")
+    print("Running restoration net...")
     restoration_r = sess.run(output_r, feed_dict={input_low_r: decom_r_low, input_low_i: decom_i_low, training: False})
+    print("Done")
 ### change the ratio to get different exposure level, the value can be 0-5.0
     ratio = float(args.ratio)
     i_low_data_ratio = np.ones([h, w])*(ratio)
     i_low_ratio_expand = np.expand_dims(i_low_data_ratio , axis =2)
     i_low_ratio_expand2 = np.expand_dims(i_low_ratio_expand, axis=0)
+
+    # illumination adjustment
+    print("Running restoration net...")
     adjust_i = sess.run(output_i, feed_dict={input_low_i: decom_i_low, input_low_i_ratio: i_low_ratio_expand2})
+    print("Done")
 
 #The restoration result can find more details from very dark regions, however, it will restore the very dark regions
 #with gray colors, we use the following operator to alleviate this weakness.  
+    print("Applying denoise filter...")
     decom_r_sq = np.squeeze(decom_r_low)
     r_gray = color.rgb2gray(decom_r_sq)
     r_gray_gaussion = filters.gaussian(r_gray, 3)
@@ -127,6 +138,7 @@ for idx in range(len(eval_low_data)):
     low_i_expand_3 = np.expand_dims(low_i_expand_0, axis = 3)
     result_denoise = restoration_r*low_i_expand_3
     fusion4 = result_denoise*adjust_i
+    print("Done")
 
     if args.adjustment:
         fusion = decom_i_low*input_low_eval + (1-decom_i_low)*fusion4
