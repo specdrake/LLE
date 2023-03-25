@@ -123,28 +123,28 @@ for idx in range(len(eval_low_data)):
     i_low_ratio_expand2 = np.expand_dims(i_low_ratio_expand, axis=0)
 
     # illumination adjustment
-    print("Running restoration net...")
+    print("Running illumnination adjustment net...")
     adjust_i = sess.run(output_i, feed_dict={input_low_i: decom_i_low, input_low_i_ratio: i_low_ratio_expand2})
     print("Done")
 
 #The restoration result can find more details from very dark regions, however, it will restore the very dark regions
 #with gray colors, we use the following operator to alleviate this weakness.  
-    print("Applying denoise filter...")
-    decom_r_sq = np.squeeze(decom_r_low)
-    r_gray = color.rgb2gray(decom_r_sq)
-    r_gray_gaussion = filters.gaussian(r_gray, 3)
-    low_i =  np.minimum((r_gray_gaussion*2)**0.5,1)
-    low_i_expand_0 = np.expand_dims(low_i, axis = 0)
-    low_i_expand_3 = np.expand_dims(low_i_expand_0, axis = 3)
-    result_denoise = restoration_r*low_i_expand_3
-    fusion4 = result_denoise*adjust_i
-    print("Done")
+    # print("Applying denoise filter...")
+    # decom_r_sq = np.squeeze(decom_r_low)
+    # r_gray = color.rgb2gray(decom_r_sq)
+    # r_gray_gaussion = filters.gaussian(r_gray, 3)
+    # low_i =  np.minimum((r_gray_gaussion*2)**0.5,1)
+    # low_i_expand_0 = np.expand_dims(low_i, axis = 0)
+    # low_i_expand_3 = np.expand_dims(low_i_expand_0, axis = 3)
+    # result_denoise = restoration_r*low_i_expand_3
+    # fusion4 = result_denoise*adjust_i
+    # print("Done")
 
-    if args.adjustment:
-        fusion = decom_i_low*input_low_eval + (1-decom_i_low)*fusion4
-    else:
-        fusion = decom_i_low*input_low_eval + (1-decom_i_low)*result_denoise
-    #fusion2 = decom_i_low*input_low_eval + (1-decom_i_low)*restoration_r
+    # if args.adjustment:
+    #     fusion = decom_i_low*input_low_eval + (1-decom_i_low)*fusion4
+    # else:
+    #     fusion = decom_i_low*input_low_eval + (1-decom_i_low)*result_denoise
+    # #fusion2 = decom_i_low*input_low_eval + (1-decom_i_low)*restoration_r
     save_images(os.path.join(sample_dir, '%s_KinD_plus.png' % (name)), fusion)
     
     
